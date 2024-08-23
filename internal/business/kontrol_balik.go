@@ -16,13 +16,15 @@ func NotifyStatusKontrolBalikMenunggu(ctx context.Context, db *gorm.DB, client *
 	defer tx.Rollback()
 
 	var kontrolBaliks []entity.KontrolBalik
-	now := time.Now().Unix()
+	t := time.Now()
+	now := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()).Unix()
 	tomorrow := now + 86400
-	threeDaysAgo := now - 259200
 
-	err := tx.Preload("Pasien.Pengguna").Preload("Pasien.AdminPuskesmas").
+	err := tx.
 		Where("status = ?", "menunggu").
-		Where("tanggal_kontrol BETWEEN ? AND ?", threeDaysAgo, tomorrow).
+		Where("tanggal_kontrol BETWEEN ? AND ?", now, tomorrow).
+		Preload("Pasien.Pengguna").
+		Preload("Pasien.AdminPuskesmas").
 		Find(&kontrolBaliks).Error
 
 	if err != nil {
@@ -38,7 +40,6 @@ func NotifyStatusKontrolBalikMenunggu(ctx context.Context, db *gorm.DB, client *
 			"namaPuskesmas":  k.Pasien.AdminPuskesmas.NamaPuskesmas,
 			"namaLengkap":    k.Pasien.Pengguna.NamaLengkap,
 			"tanggalKontrol": strconv.FormatInt(k.TanggalKontrol, 10),
-			"tanggalBatal":   strconv.FormatInt(k.TanggalKontrol+259200, 10),
 		}
 		if err := helper.SendNotificationData(ctx, client, data, k.Pasien.Pengguna.TokenPerangkat); err != nil {
 			log.Printf("Failed to send notification data for %s : %s", k.Pasien.Pengguna.TokenPerangkat, err.Error())
@@ -55,11 +56,11 @@ func BatalkanStatusKontrolBalikMenunggu(ctx context.Context, db *gorm.DB) error 
 	tx := db.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	now := time.Now().Unix()
-	threeDaysAgo := now - 259200
+	t := time.Now()
+	now := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()).Unix()
 
 	var kontrolBaliks []entity.KontrolBalik
-	if err := tx.Where("status = ? AND tanggal_kontrol < ?", "menunggu", threeDaysAgo).Find(&kontrolBaliks).Error; err != nil {
+	if err := tx.Where("status = ? AND tanggal_kontrol < ?", "menunggu", now).Find(&kontrolBaliks).Error; err != nil {
 		return err
 	}
 	if len(kontrolBaliks) == 0 {

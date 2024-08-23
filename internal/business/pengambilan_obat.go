@@ -17,13 +17,17 @@ func NotifyStatusPengambilanObatMenunggu(ctx context.Context, db *gorm.DB, clien
 	defer tx.Rollback()
 
 	var pengambilanObats []entity.PengambilanObat
-	now := time.Now().Unix()
+	t := time.Now()
+	now := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()).Unix()
 	tomorrow := now + 86400
-	threeDaysAgo := now - 259200
+	twoDaysAgo := now - 172800
 
-	err := tx.Preload("Obat").Preload("Pasien.Pengguna").Preload("Obat.AdminApotek").
+	err := tx.
 		Where("status = ?", "menunggu").
-		Where("tanggal_pengambilan BETWEEN ? AND ?", threeDaysAgo, tomorrow).
+		Where("tanggal_pengambilan BETWEEN ? AND ?", twoDaysAgo, tomorrow).
+		Preload("Obat").
+		Preload("Pasien.Pengguna").
+		Preload("Obat.AdminApotek").
 		Find(&pengambilanObats).Error
 	if err != nil {
 		return err
@@ -39,6 +43,8 @@ func NotifyStatusPengambilanObatMenunggu(ctx context.Context, db *gorm.DB, clien
 			"title":              "PRB Care - Pengambilan Obat",
 			"namaApotek":         p.Obat.AdminApotek.NamaApotek,
 			"namaLengkap":        p.Pasien.Pengguna.NamaLengkap,
+			"namaObat":           p.Obat.NamaObat,
+			"jumlahObat":         strconv.Itoa(int(p.Jumlah)),
 			"tanggalPengambilan": strconv.FormatInt(p.TanggalPengambilan, 10),
 			"tanggalBatal":       strconv.FormatInt(p.TanggalPengambilan+259200, 10),
 		}
@@ -58,11 +64,12 @@ func BatalkanStatusPengambilanObatMenunggu(ctx context.Context, db *gorm.DB) err
 	tx := db.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	now := time.Now().Unix()
-	threeDaysAgo := now - 259200
+	t := time.Now()
+	now := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()).Unix()
+	twoDaysAgo := now - 172800
 
 	var pengambilanObats []entity.PengambilanObat
-	if err := tx.Where("status = ? AND tanggal_pengambilan < ?", "menunggu", threeDaysAgo).Find(&pengambilanObats).Error; err != nil {
+	if err := tx.Where("status = ? AND tanggal_pengambilan < ?", "menunggu", twoDaysAgo).Find(&pengambilanObats).Error; err != nil {
 		return err
 	}
 

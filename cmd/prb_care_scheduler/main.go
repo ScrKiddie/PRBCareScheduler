@@ -17,7 +17,7 @@ func main() {
 	logger := cron.VerbosePrintfLogger(log.New(log.Writer(), "cron: ", log.LstdFlags))
 	c := cron.New(cron.WithLogger(logger))
 
-	_, err := c.AddFunc("0 9,12,15 * * *", func() {
+	_, err := c.AddFunc(conf.GetString("time.notify"), func() {
 		if err := business.NotifyStatusKontrolBalikMenunggu(ctx, db, client); err != nil {
 			log.Println(err)
 		}
@@ -26,7 +26,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	_, err = c.AddFunc("0 9,12,15 * * *", func() {
+	_, err = c.AddFunc(conf.GetString("time.notify"), func() {
 		if err := business.NotifyStatusPengambilanObatMenunggu(ctx, db, client); err != nil {
 			log.Println(err)
 		}
@@ -35,7 +35,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	_, err = c.AddFunc("0 0 * * *", func() {
+	_, err = c.AddFunc(conf.GetString("time.cancel"), func() {
 		if err := business.BatalkanStatusKontrolBalikMenunggu(ctx, db); err != nil {
 			log.Println(err)
 		}
@@ -44,7 +44,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	_, err = c.AddFunc("0 0 * * *", func() {
+	_, err = c.AddFunc(conf.GetString("time.cancel"), func() {
 		if err := business.BatalkanStatusPengambilanObatMenunggu(ctx, db); err != nil {
 			log.Println(err)
 		}
