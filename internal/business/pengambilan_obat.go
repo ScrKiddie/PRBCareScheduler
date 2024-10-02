@@ -3,9 +3,10 @@ package business
 import (
 	"context"
 	"firebase.google.com/go/messaging"
+	"fmt"
+	"golang.org/x/exp/slog"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"log"
 	"prb_care_scheduler/internal/entity"
 	"prb_care_scheduler/internal/helper"
 	"strconv"
@@ -17,39 +18,54 @@ func NotifyStatusPengambilanObatMenunggu(ctx context.Context, db *gorm.DB, clien
 	defer tx.Rollback()
 
 	var pengambilanObats []entity.PengambilanObat
+	var pengambilanObat entity.PengambilanObat
+
 	t := time.Now()
 	now := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()).Unix()
 	tomorrow := now + 86400
 	twoDaysAgo := now - 172800
 
+	var uniqueResis []string
 	err := tx.
+		Model(&pengambilanObat).
+		Select("DISTINCT resi").
 		Where("status = ?", "menunggu").
 		Where("tanggal_pengambilan BETWEEN ? AND ?", twoDaysAgo, tomorrow).
-		Preload("Obat").
-		Preload("Pasien.Pengguna").
-		Preload("Obat.AdminApotek").
-		Find(&pengambilanObats).Error
+		Find(&uniqueResis).Error
 	if err != nil {
 		return err
 	}
 
+	for _, resi := range uniqueResis {
+		pengambilanObat.ID = 0
+		err = tx.
+			Where("resi = ?", resi).
+			Preload("Obat").
+			Preload("Pasien.Pengguna").
+			Preload("Obat.AdminApotek").
+			First(&pengambilanObat).Error
+		if err != nil {
+			return err
+		}
+		pengambilanObats = append(pengambilanObats, pengambilanObat)
+	}
+
 	if len(pengambilanObats) == 0 {
-		log.Println("Tidak ada pengambilan obat dengan status 'menunggu' yang memenuhi kondisi untuk notifikasi.")
+		slog.Info("no waiting pengambilan obat meets the condition for notification")
 		return nil
 	}
 
 	for _, p := range pengambilanObats {
 		data := map[string]string{
-			"title":              "PRB Care - Pengambilan Obat",
 			"namaApotek":         p.Obat.AdminApotek.NamaApotek,
 			"namaLengkap":        p.Pasien.Pengguna.NamaLengkap,
-			"namaObat":           p.Obat.NamaObat,
-			"jumlahObat":         strconv.Itoa(int(p.Jumlah)),
 			"tanggalPengambilan": strconv.FormatInt(p.TanggalPengambilan, 10),
 			"tanggalBatal":       strconv.FormatInt(p.TanggalPengambilan+259200, 10),
 		}
 		if err := helper.SendNotificationData(ctx, client, data, p.Pasien.Pengguna.TokenPerangkat); err != nil {
-			log.Printf("Failed to send notification data for %s : %s", p.Pasien.Pengguna.TokenPerangkat, err.Error())
+			slog.Info(fmt.Sprintf("failed to send notification data for %s: %s", p.Pasien.Pengguna.TokenPerangkat, err.Error()))
+		} else {
+			slog.Info("success send notification data for " + p.Pasien.Pengguna.TokenPerangkat)
 		}
 	}
 
@@ -74,7 +90,7 @@ func BatalkanStatusPengambilanObatMenunggu(ctx context.Context, db *gorm.DB) err
 	}
 
 	if len(pengambilanObats) == 0 {
-		log.Println("Tidak ada pengambilan obat dengan status 'menunggu' yang memenuhi kondisi untuk dibatalkan.")
+		slog.Info("no waiting pengambilan obat meets the condition for cancellation")
 		return nil
 	}
 

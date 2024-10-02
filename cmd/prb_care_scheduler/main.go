@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/robfig/cron/v3"
+	"golang.org/x/exp/slog"
 	"log"
 	"prb_care_scheduler/internal/business"
 	"prb_care_scheduler/internal/config"
@@ -14,43 +15,43 @@ func main() {
 	client := config.NewFirebase()
 	ctx := context.Background()
 
-	logger := cron.VerbosePrintfLogger(log.New(log.Writer(), "cron: ", log.LstdFlags))
+	logger := cron.VerbosePrintfLogger(log.New(log.Writer(), "", log.LstdFlags))
 	c := cron.New(cron.WithLogger(logger))
 
 	_, err := c.AddFunc(conf.GetString("time.notify"), func() {
 		if err := business.NotifyStatusKontrolBalikMenunggu(ctx, db, client); err != nil {
-			log.Println(err)
+			slog.Warn("failed to execute NotifyStatusKontrolBalikMenunggu(): " + err.Error())
 		}
 	})
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("failed to add NotifyStatusKontrolBalikMenunggu(): " + err.Error())
 	}
 
 	_, err = c.AddFunc(conf.GetString("time.notify"), func() {
 		if err := business.NotifyStatusPengambilanObatMenunggu(ctx, db, client); err != nil {
-			log.Println(err)
+			slog.Warn("failed to execute NotifyStatusPengambilanObatMenunggu(): " + err.Error())
 		}
 	})
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("failed to add NotifyStatusPengambilanObatMenunggu(): " + err.Error())
 	}
 
 	_, err = c.AddFunc(conf.GetString("time.cancel"), func() {
 		if err := business.BatalkanStatusKontrolBalikMenunggu(ctx, db); err != nil {
-			log.Println(err)
+			slog.Warn("failed to execute BatalkanStatusKontrolBalikMenunggu(): " + err.Error())
 		}
 	})
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("failed to add BatalkanStatusKontrolBalikMenunggu(): " + err.Error())
 	}
 
 	_, err = c.AddFunc(conf.GetString("time.cancel"), func() {
 		if err := business.BatalkanStatusPengambilanObatMenunggu(ctx, db); err != nil {
-			log.Println(err)
+			slog.Warn("failed to execute BatalkanStatusPengambilanObatMenunggu(): " + err.Error())
 		}
 	})
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("failed to add BatalkanStatusPengambilanObatMenunggu(): " + err.Error())
 	}
 
 	c.Start()
