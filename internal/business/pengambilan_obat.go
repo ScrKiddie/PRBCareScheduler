@@ -7,6 +7,7 @@ import (
 	"golang.org/x/exp/slog"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"prb_care_scheduler/internal/constant"
 	"prb_care_scheduler/internal/entity"
 	"prb_care_scheduler/internal/helper"
 	"strconv"
@@ -23,14 +24,14 @@ func NotifyStatusPengambilanObatMenunggu(ctx context.Context, db *gorm.DB, clien
 	t := time.Now()
 	now := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()).Unix()
 	tomorrow := now + 86400
-	twoDaysAgo := now - 172800
+	fourDaysAgo := now - (4 * 86400)
 
 	var uniqueResis []string
 	err := tx.
 		Model(&pengambilanObat).
 		Select("DISTINCT resi").
-		Where("status = ?", "menunggu").
-		Where("tanggal_pengambilan BETWEEN ? AND ?", twoDaysAgo, tomorrow).
+		Where("status = ?", constant.StatusPengambilanObatMenunggu).
+		Where("tanggal_pengambilan BETWEEN ? AND ?", fourDaysAgo, tomorrow).
 		Find(&uniqueResis).Error
 	if err != nil {
 		return err
@@ -60,7 +61,7 @@ func NotifyStatusPengambilanObatMenunggu(ctx context.Context, db *gorm.DB, clien
 			"namaApotek":         p.Obat.AdminApotek.NamaApotek,
 			"namaLengkap":        p.Pasien.Pengguna.NamaLengkap,
 			"tanggalPengambilan": strconv.FormatInt(p.TanggalPengambilan, 10),
-			"tanggalBatal":       strconv.FormatInt(p.TanggalPengambilan+259200, 10),
+			"tanggalBatal":       strconv.FormatInt(p.TanggalPengambilan+(4*86400), 10),
 		}
 		if err := helper.SendNotificationData(ctx, client, data, p.Pasien.Pengguna.TokenPerangkat); err != nil {
 			slog.Info(fmt.Sprintf("failed to send notification data for %s: %s", p.Pasien.Pengguna.TokenPerangkat, err.Error()))
@@ -82,10 +83,10 @@ func BatalkanStatusPengambilanObatMenunggu(ctx context.Context, db *gorm.DB) err
 
 	t := time.Now()
 	now := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()).Unix()
-	twoDaysAgo := now - 172800
+	fourDaysAgo := now - (4 * 86400)
 
 	var pengambilanObats []entity.PengambilanObat
-	if err := tx.Where("status = ? AND tanggal_pengambilan < ?", "menunggu", twoDaysAgo).Find(&pengambilanObats).Error; err != nil {
+	if err := tx.Where("status = ? AND tanggal_pengambilan < ?", constant.StatusPengambilanObatMenunggu, fourDaysAgo).Find(&pengambilanObats).Error; err != nil {
 		return err
 	}
 
@@ -95,7 +96,7 @@ func BatalkanStatusPengambilanObatMenunggu(ctx context.Context, db *gorm.DB) err
 	}
 
 	for _, p := range pengambilanObats {
-		if err := tx.Model(&p).Update("status", "batal").Error; err != nil {
+		if err := tx.Model(&p).Update("status", constant.StatusPengambilanObatBatal).Error; err != nil {
 			return err
 		}
 

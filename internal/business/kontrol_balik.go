@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"golang.org/x/exp/slog"
 	"gorm.io/gorm"
+	"prb_care_scheduler/internal/constant"
 	"prb_care_scheduler/internal/entity"
 	"prb_care_scheduler/internal/helper"
 	"strconv"
@@ -19,11 +20,11 @@ func NotifyStatusKontrolBalikMenunggu(ctx context.Context, db *gorm.DB, client *
 	var kontrolBaliks []entity.KontrolBalik
 	t := time.Now()
 	now := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()).Unix()
-	tomorrow := now + 86400
+	nextWeek := now + (7 * 86400)
 
 	err := tx.
-		Where("status = ?", "menunggu").
-		Where("tanggal_kontrol BETWEEN ? AND ?", now, tomorrow).
+		Where("status = ?", constant.StatusKontrolBalikMenunggu).
+		Where("tanggal_kontrol BETWEEN ? AND ?", now, nextWeek).
 		Preload("Pasien.Pengguna").
 		Preload("Pasien.AdminPuskesmas").
 		Find(&kontrolBaliks).Error
@@ -64,7 +65,7 @@ func BatalkanStatusKontrolBalikMenunggu(ctx context.Context, db *gorm.DB) error 
 	now := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()).Unix()
 
 	var kontrolBaliks []entity.KontrolBalik
-	if err := tx.Where("status = ? AND tanggal_kontrol < ?", "menunggu", now).Find(&kontrolBaliks).Error; err != nil {
+	if err := tx.Where("status = ? AND tanggal_kontrol < ?", constant.StatusKontrolBalikMenunggu, now).Find(&kontrolBaliks).Error; err != nil {
 		return err
 	}
 
@@ -74,7 +75,7 @@ func BatalkanStatusKontrolBalikMenunggu(ctx context.Context, db *gorm.DB) error 
 	}
 
 	for _, k := range kontrolBaliks {
-		if err := tx.Model(&k).Update("status", "batal").Error; err != nil {
+		if err := tx.Model(&k).Update("status", constant.StatusKontrolBalikBatal).Error; err != nil {
 			return err
 		}
 	}
