@@ -2,7 +2,7 @@ package business
 
 import (
 	"context"
-	"firebase.google.com/go/messaging"
+	"firebase.google.com/go/v4/messaging"
 	"fmt"
 	"golang.org/x/exp/slog"
 	"gorm.io/gorm"

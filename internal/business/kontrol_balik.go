@@ -2,7 +2,7 @@ package business
 
 import (
 	"context"
-	"firebase.google.com/go/messaging"
+	"firebase.google.com/go/v4/messaging"
 	"fmt"
 	"golang.org/x/exp/slog"
 	"gorm.io/gorm"
@@ -20,11 +20,12 @@ func NotifyStatusKontrolBalikMenunggu(ctx context.Context, db *gorm.DB, client *
 	var kontrolBaliks []entity.KontrolBalik
 	t := time.Now()
 	now := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()).Unix()
+	lastMonth := now - (30 * 86400)
 	nextWeek := now + (7 * 86400)
 
 	err := tx.
 		Where("status = ?", constant.StatusKontrolBalikMenunggu).
-		Where("tanggal_kontrol BETWEEN ? AND ?", now, nextWeek).
+		Where("tanggal_kontrol BETWEEN ? AND ?", lastMonth, nextWeek).
 		Preload("Pasien.Pengguna").
 		Preload("Pasien.AdminPuskesmas").
 		Find(&kontrolBaliks).Error
@@ -63,9 +64,9 @@ func BatalkanStatusKontrolBalikMenunggu(ctx context.Context, db *gorm.DB) error 
 
 	t := time.Now()
 	now := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()).Unix()
-
+	lastMonth := now - (30 * 86400)
 	var kontrolBaliks []entity.KontrolBalik
-	if err := tx.Where("status = ? AND tanggal_kontrol < ?", constant.StatusKontrolBalikMenunggu, now).Find(&kontrolBaliks).Error; err != nil {
+	if err := tx.Where("status = ? AND tanggal_kontrol < ?", constant.StatusKontrolBalikMenunggu, lastMonth).Find(&kontrolBaliks).Error; err != nil {
 		return err
 	}
 

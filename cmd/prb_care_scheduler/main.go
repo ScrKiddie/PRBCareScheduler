@@ -54,6 +54,15 @@ func main() {
 		log.Fatalln("failed to add BatalkanStatusPengambilanObatMenunggu(): " + err.Error())
 	}
 
+	_, err = c.AddFunc(conf.GetString("time.notify"), func() {
+		if err := business.NotifyProlanis(ctx, db, client); err != nil {
+			slog.Warn("failed to execute NotifyProlanis(): " + err.Error())
+		}
+	})
+	if err != nil {
+		log.Fatalln("failed to add NotifyProlanis(): " + err.Error())
+	}
+
 	_, err = c.AddFunc(conf.GetString("time.cancel"), func() {
 		if err := business.BatalkanStatusProlanisAktif(ctx, db); err != nil {
 			slog.Warn("failed to execute BatalkanStatusProlanisAktif(): " + err.Error())
