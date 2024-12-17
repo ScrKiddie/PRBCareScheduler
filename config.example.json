@@ -5,5 +5,13 @@
     "host": "YOUR_DB_HOST",
     "port": 5432,
     "name": "YOUR_DB_NAME"
+  },
+  "time": {
+    "notify": {
+      "kontrol": "* * * * *",
+      "obat": "* * * * *",
+      "prolanis": "* * * * *"
+    },
+    "cancel": "* * * * *"
   }
 }

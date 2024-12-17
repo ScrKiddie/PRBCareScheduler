@@ -21,15 +21,15 @@ PRBCareScheduler adalah aplikasi scheduler yang mendukung [PRBCareAPI](https://g
 ## Environment Variables
 PRBCareScheduler akan menggunakan environment variables sebagai konfigurasi utama menggantikan `config.json` jika variabel-variabel tersebut diset sebelum menjalankan proyek:
 
-| Key             | Type    | Deskripsi                           | Contoh                                                       |
-|-----------------|---------|-------------------------------------|--------------------------------------------------------------|
-| **TIME_NOTIFY** | `string`| Waktu notifikasi dalam format cron. | `* * * * *`                                                       |
-| **TIME_CANCEL** | `string`| Waktu pembatalan dalam format cron. | `* * * * *`                                                       |
-| **DB_USERNAME** | `string`| Nama pengguna database.             | `root`                                                       |
-| **DB_PASSWORD** | `string`| Kata sandi database.                | `password123`                                                |
-| **DB_HOST**     | `string`| Host database.                      | `localhost`                                                  |
-| **DB_PORT**     | `int`   | Port koneksi database.              | `3306`                                                       |
-| **DB_NAME**     | `string`| Nama database.                      | `prbcare`                                                    |
+| Key                                                                | Type    | Deskripsi                           | Contoh                                                       |
+|--------------------------------------------------------------------|---------|-------------------------------------|--------------------------------------------------------------|
+| **TIME_NOTIFY_KONTROL,TIME_NOTIFY_PROLANIS,TIME_NOTIFY_OBAT** | `string`| Waktu notifikasi dalam format cron. | `* * * * *`                                                       |
+| **TIME_CANCEL**                                                    | `string`| Waktu pembatalan dalam format cron. | `* * * * *`                                                       |
+| **DB_USERNAME**                                                    | `string`| Nama pengguna database.             | `root`                                                       |
+| **DB_PASSWORD**                                                    | `string`| Kata sandi database.                | `password123`                                                |
+| **DB_HOST**                                                        | `string`| Host database.                      | `localhost`                                                  |
+| **DB_PORT**                                                        | `int`   | Port koneksi database.              | `3306`                                                       |
+| **DB_NAME**                                                        | `string`| Nama database.                      | `prbcare`                                                    |
 
 Cara Set Environment Variables:
 - **Windows**: Gunakan System Properties > Advanced > Environment Variables, atau command setx.

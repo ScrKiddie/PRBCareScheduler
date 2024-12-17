@@ -18,7 +18,7 @@ func main() {
 	logger := cron.VerbosePrintfLogger(log.New(log.Writer(), "", log.LstdFlags))
 	c := cron.New(cron.WithLogger(logger))
 
-	_, err := c.AddFunc(conf.GetString("time.notify"), func() {
+	_, err := c.AddFunc(conf.GetString("time.notify.kontrol"), func() {
 		if err := business.NotifyStatusKontrolBalikMenunggu(ctx, db, client); err != nil {
 			slog.Warn("failed to execute NotifyStatusKontrolBalikMenunggu(): " + err.Error())
 		}
@@ -27,7 +27,7 @@ func main() {
 		log.Fatalln("failed to add NotifyStatusKontrolBalikMenunggu(): " + err.Error())
 	}
 
-	_, err = c.AddFunc(conf.GetString("time.notify"), func() {
+	_, err = c.AddFunc(conf.GetString("time.notify.obat"), func() {
 		if err := business.NotifyStatusPengambilanObatMenunggu(ctx, db, client); err != nil {
 			slog.Warn("failed to execute NotifyStatusPengambilanObatMenunggu(): " + err.Error())
 		}
@@ -54,7 +54,7 @@ func main() {
 		log.Fatalln("failed to add BatalkanStatusPengambilanObatMenunggu(): " + err.Error())
 	}
 
-	_, err = c.AddFunc(conf.GetString("time.notify"), func() {
+	_, err = c.AddFunc(conf.GetString("time.notify.prolanis"), func() {
 		if err := business.NotifyProlanis(ctx, db, client); err != nil {
 			slog.Warn("failed to execute NotifyProlanis(): " + err.Error())
 		}
